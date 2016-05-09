@@ -28,9 +28,8 @@ public class Hcd2App {
         String hcdName = args[0];
         String prefix = (Objects.equals(hcdName, "HCD-2A")) ? "tcs.mobie.blue.filter" : "tcs.mobie.blue.disperser";
         String className = "csw.pkgDemo.hcd2.Hcd2";
-//        ComponentId componentId = new ComponentId(hcdName, JComponentType.HCD);
         HcdInfo hcdInfo = JComponentSup.hcdInfo(hcdName, prefix, className, JComponent.RegisterOnly,
                 Collections.singleton(AkkaType), new FiniteDuration(1, TimeUnit.SECONDS));
-        new Supervisor(hcdInfo);
+        Supervisor.apply(hcdInfo);
     }
 }
