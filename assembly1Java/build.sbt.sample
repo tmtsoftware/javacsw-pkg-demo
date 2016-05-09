@@ -1,0 +1,19 @@
+import com.typesafe.sbt.packager.Keys._
+
+val Version = "0.2-SNAPSHOT"
+
+lazy val settings = Seq(
+  organization := "org.tmt",
+  version := Version,
+  scalaVersion := "2.11.8"
+)
+lazy val packageSettings = settings ++ packagerSettings ++ packageArchetype.java_application
+
+lazy val pkg = "org.tmt" %% "pkg" % Version
+
+lazy val assembly1 = (project in file("."))
+  .settings(packageSettings: _*)
+  .settings(bashScriptExtraDefines ++= Seq("addJava -Dcsw.extjs.root=" + file("../../csw-extjs").absolutePath))
+  .settings(
+    libraryDependencies ++= Seq(pkg)
+  )
