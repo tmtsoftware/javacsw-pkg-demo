@@ -5,17 +5,17 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
 import csw.services.loc.LocationService;
-import csw.util.cfg.Configurations.*;
 import csw.util.cfg.StateVariable;
 import csw.util.cfg.StateVariable.CurrentState;
 import javacsw.services.ccs.JAssemblyController;
 import javacsw.services.pkg.JAssemblyControllerWithLifecycleHandler;
 import javacsw.services.pkg.JSupervisor;
+import javacsw.util.cfg.JObserveConfigArg;
+import javacsw.util.cfg.JSetupConfig;
+import javacsw.util.cfg.JSetupConfigArg;
+import javacsw.util.cfg.JStandardKeys;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A Java based test assembly that just forwards configs to HCDs based on prefix
@@ -65,26 +65,30 @@ public class Assembly1 extends JAssemblyControllerWithLifecycleHandler {
     }
 
     @Override
-    public Validation observe(Boolean locationsResolved, ObserveConfigArg configArg, Optional<ActorRef> replyTo) {
+    public Validation observe(Boolean locationsResolved, JObserveConfigArg configArg, Optional<ActorRef> replyTo) {
         return JAssemblyController.Invalid("Wasn't expecting an observe config");
     }
 
-    /**
-     * Validates a received config arg
-     */
-    private Validation validate(SetupConfigArg config) {
-        // TODO: add code to check if the config is valid
-        return JAssemblyController.Valid;
+    // The argument contains a  list of setup configs. This method returns Valid if
+    // each config contains either a filter or disperser key.
+    private Validation validate(JSetupConfigArg setupConfigArg) {
+        for (JSetupConfig config : setupConfigArg.getConfigs()) {
+            String prefix = config.getPrefix();
+            if ((Objects.equals(prefix, JStandardKeys.filterPrefix) && config.get(JStandardKeys.filter).isPresent())
+            || (Objects.equals(prefix, JStandardKeys.disperserPrefix) && config.get(JStandardKeys.disperser).isPresent()))
+                return JAssemblyController.Valid;
+        }
+        return JAssemblyController.Invalid("Expected a filter or disperser config");
     }
 
     @Override
-    public Validation setup(Boolean locationsResolved, SetupConfigArg configArg, Optional<ActorRef> replyTo) {
+    public Validation setup(Boolean locationsResolved, JSetupConfigArg configArg, Optional<ActorRef> replyTo) {
         Validation valid = validate(configArg);
         if (valid.isValid()) {
             // The call below just distributes the configs to the HCDs based on matching prefix,
             // but you could just as well generate new configs and send them here...
             // Note that a CommandStatus message should eventually be sent to the replyTo actor.
-            return distributeSetupConfigs(locationsResolved, configArg, replyTo);
+            return distributeSetupConfigs(locationsResolved, configArg.setupConfigArg(), replyTo);
         }
         return valid;
     }
