@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * A Java based test assembly that just forwards configs to HCDs based on prefix
  */
-@SuppressWarnings({"FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType", "UnusedParameters", "unused"})
+@SuppressWarnings({"FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType", "unused"})
 public class Assembly1 extends JAssemblyControllerWithLifecycleHandler {
     private final AssemblyInfo info;
 
@@ -83,6 +83,7 @@ public class Assembly1 extends JAssemblyControllerWithLifecycleHandler {
         if (valid.isValid()) {
             // The call below just distributes the configs to the HCDs based on matching prefix,
             // but you could just as well generate new configs and send them here...
+            // Note that a CommandStatus message should eventually be sent to the replyTo actor.
             return distributeSetupConfigs(locationsResolved, configArg, replyTo);
         }
         return valid;
