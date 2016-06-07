@@ -8,6 +8,7 @@ lazy val assembly1Java = project
   .enablePlugins(JavaAppPackaging)
   .settings(packageSettings("assembly1Java", "Assembly Java Demo", "Example Java assembly"): _*)
   .settings(libraryDependencies ++= Seq(pkg, javacsw))
+  .dependsOn(hcd2Java)
 
 lazy val container1Java = project
   .enablePlugins(JavaAppPackaging)

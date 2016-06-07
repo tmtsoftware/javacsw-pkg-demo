@@ -8,20 +8,14 @@ import akka.japi.pf.ReceiveBuilder;
 import akka.util.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import csw.util.cfg.Key;
-import csw.util.cfg.StateVariable.CurrentState;
-import csw.util.cfg.Configurations.*;
-import csw.util.cfg.StandardKeys;
-import javacsw.util.cfg.JConfigurations;
-import javacsw.util.cfg.JCurrentState;
-import javacsw.util.cfg.JSetupConfig;
-import javacsw.util.cfg.JStandardKeys;
+import csw.util.config.ConfigJSON;
+import csw.util.config.StateVariable.CurrentState;
+import csw.util.config.Configurations.*;
+import csw.util.config.StringKey;
 import org.zeromq.ZMQ;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 import static csw.pkgDemo.hcd2.Hcd2Worker.Msg.RequestCurrentState;
 
@@ -49,11 +43,6 @@ public class Hcd2Worker extends AbstractActor {
         });
     }
 
-    // Available choices
-    private static final String[] FILTERS = new String[]{"None", "g_G0301", "r_G0303", "i_G0302", "z_G0304", "Z_G0322", "Y_G0323", "u_G0308"};
-    private static final String[] DISPERSERS = new String[]{"Mirror", "B1200_G5301", "R831_G5302", "B600_G5303", "B600_G5307", "R600_G5304", "R400_G5305", "R150_G5306"};
-
-
     // Message requesting current state of HCD values
     public enum Msg {
         RequestCurrentState
@@ -71,7 +60,7 @@ public class Hcd2Worker extends AbstractActor {
     private final String[] choices;
 
     // The key to set the filter or disperser value in the config
-    private final Key key;
+    private final StringKey key;
 
     // Reference to actor that talks to the zmq process
     private final ActorRef zmqClient;
@@ -93,11 +82,11 @@ public class Hcd2Worker extends AbstractActor {
 
         // The key and list of choices used in configurations and CurrentState objects
         if (zmqKey.equals("filter")) {
-            key = JStandardKeys.filter;
-            choices = FILTERS;
+            key = Hcd2.filterKey;
+            choices = Hcd2.FILTERS;
         } else {
-            key = JStandardKeys.disperser;
-            choices = DISPERSERS;
+            key = Hcd2.disperserKey;
+            choices = Hcd2.DISPERSERS;
         }
 
         // Get the ZMQ client
@@ -116,9 +105,11 @@ public class Hcd2Worker extends AbstractActor {
 
     // Action when receiving a SetupConfig
     private void handleSetupConfig(SetupConfig setupConfig) {
-        Optional<String> value = new JSetupConfig(setupConfig).getAsString(key);
+        System.out.println("XXX Hcd2Worker received " + ConfigJSON.writeConfig(setupConfig).toString());
+        Optional<String> value = setupConfig.jget(key, 0);
         if (value.isPresent()) {
             int pos = Arrays.asList(choices).indexOf(value.get());
+            System.out.println("XXX value = " + value.get() + ", pos = " + pos);
             setPos(currentPos, pos);
         }
     }
@@ -139,14 +130,15 @@ public class Hcd2Worker extends AbstractActor {
         int pos = Integer.parseInt(reply.decodeString(ZMQ.CHARSET.name()));
         log.info("ZMQ current pos: " + pos);
         String value = choices[pos];
-        JCurrentState state = JConfigurations.createCurrentState(prefix).set(key, value);
-        getContext().parent().tell(state.configType(), self());
+        CurrentState state = new CurrentState(prefix).jset(key, value);
+        getContext().parent().tell(state, self());
         setPos(pos, demandPos);
     }
 
     // Send the parent the current state
     private void handleRequestCurrentState() {
-        JCurrentState state = JConfigurations.createCurrentState(prefix).set(key, choices[currentPos]);
+        CurrentState state = new CurrentState(prefix).jset(key, choices[currentPos]);
+        System.out.println("XXX Hcd2Worker CurrentState " + ConfigJSON.writeConfig(state).toString());
         getContext().parent().tell(state, self());
     }
 }

@@ -26,7 +26,7 @@ public class Hcd2App {
         }
         LocationService.initInterface();
         String hcdName = args[0];
-        String prefix = (Objects.equals(hcdName, "HCD-2A")) ? "tcs.mobie.blue.filter" : "tcs.mobie.blue.disperser";
+        String prefix = Objects.equals(hcdName, "HCD-2A") ? Hcd2.filterPrefix : Hcd2.disperserPrefix;
         String className = "csw.pkgDemo.hcd2.Hcd2";
         HcdInfo hcdInfo = JComponentSup.hcdInfo(hcdName, prefix, className, JComponent.RegisterOnly,
                 Collections.singleton(AkkaType), new FiniteDuration(1, TimeUnit.SECONDS));
