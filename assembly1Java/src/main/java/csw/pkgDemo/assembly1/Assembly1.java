@@ -4,7 +4,9 @@ import akka.actor.ActorRef;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
+import csw.pkgDemo.hcd2.Hcd2;
 import csw.services.loc.LocationService;
+import csw.util.config.ConfigJSON;
 import csw.util.config.Configurations.*;
 import csw.util.config.StateVariable;
 import csw.util.config.StateVariable.*;
@@ -67,14 +69,14 @@ public class Assembly1 extends JAssemblyControllerWithLifecycleHandler {
     // The argument contains a  list of setup configs. This method returns Valid if
     // each config contains either a filter or disperser key.
     private Validation validate(SetupConfigArg setupConfigArg) {
-//        Validation result = JAssemblyController.Valid;
-//        for (SetupConfig config : setupConfigArg.jconfigs()) {
-//            if (! ((config.exists(Hcd2.filterKey)) || (config.exists(Hcd2.disperserKey))))
-//                result = JAssemblyController.Invalid("Expected a filter or disperser key, but got: "
-//                        + ConfigJSON.writeConfig(config).toString());
-//        }
-//        return result;
-        return JAssemblyController.Valid;
+        Validation result = JAssemblyController.Valid;
+        for (SetupConfig config : setupConfigArg.jconfigs()) {
+            if (! ((config.exists(Hcd2.filterKey)) || (config.exists(Hcd2.disperserKey))))
+                result = JAssemblyController.Invalid("Expected a filter or disperser key, but got: "
+                        + ConfigJSON.writeConfig(config).toString());
+        }
+        return result;
+//        return JAssemblyController.Valid;
     }
 
     @Override
