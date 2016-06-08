@@ -4,12 +4,10 @@ import akka.actor.ActorRef;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.pf.ReceiveBuilder;
-import csw.pkgDemo.hcd2.Hcd2;
 import csw.services.loc.LocationService;
-import csw.util.config.ConfigJSON;
 import csw.util.config.Configurations.*;
 import csw.util.config.StateVariable;
-import csw.util.config.StateVariable.CurrentState;
+import csw.util.config.StateVariable.*;
 import javacsw.services.ccs.JAssemblyController;
 import javacsw.services.pkg.JAssemblyControllerWithLifecycleHandler;
 import javacsw.services.pkg.JSupervisor;
@@ -48,19 +46,17 @@ public class Assembly1 extends JAssemblyControllerWithLifecycleHandler {
 
     }
 
-    // Current state received from one of the HCDs: For now just forward it to any subscribers.
-    // It might make more sense to create an Assembly state, built from the various HCD states and
-    // publish that to the subscribers... TODO
+    // Current state received from one of the HCDs
     private void updateCurrentState(CurrentState s) {
-        notifySubscribers(s);
         stateMap.put(s.prefix(), s);
+        requestCurrent();
     }
 
     // For now, when the current state is requested, send the HCD states.
-    // TODO: Use assembly specific state
     @Override
     public void requestCurrent() {
-        stateMap.values().forEach(this::notifySubscribers);
+        CurrentStates states = StateVariable.createCurrentStates(new ArrayList<>(stateMap.values()));
+        notifySubscribers(states);
     }
 
     @Override
