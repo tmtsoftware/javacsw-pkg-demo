@@ -79,7 +79,6 @@ public class Hcd2 extends JHcdControllerWithLifecycleHandler {
     @Override
     // Send the config to the worker for processing
     public void process(SetupConfig config) {
-        System.out.println("XXX HCD2 received " + ConfigJSON.writeConfig(config).toString());
         worker.tell(config, self());
     }
 

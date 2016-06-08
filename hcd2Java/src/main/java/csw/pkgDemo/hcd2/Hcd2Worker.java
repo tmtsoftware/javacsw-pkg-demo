@@ -105,11 +105,9 @@ public class Hcd2Worker extends AbstractActor {
 
     // Action when receiving a SetupConfig
     private void handleSetupConfig(SetupConfig setupConfig) {
-        System.out.println("XXX Hcd2Worker received " + ConfigJSON.writeConfig(setupConfig).toString());
         Optional<String> value = setupConfig.jget(key, 0);
         if (value.isPresent()) {
             int pos = Arrays.asList(choices).indexOf(value.get());
-            System.out.println("XXX value = " + value.get() + ", pos = " + pos);
             setPos(currentPos, pos);
         }
     }
@@ -138,7 +136,6 @@ public class Hcd2Worker extends AbstractActor {
     // Send the parent the current state
     private void handleRequestCurrentState() {
         CurrentState state = new CurrentState(prefix).jset(key, choices[currentPos]);
-        System.out.println("XXX Hcd2Worker CurrentState " + ConfigJSON.writeConfig(state).toString());
         getContext().parent().tell(state, self());
     }
 }

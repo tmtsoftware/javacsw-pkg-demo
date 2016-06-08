@@ -84,7 +84,6 @@ public class Assembly1 extends JAssemblyControllerWithLifecycleHandler {
             // The call below just distributes the configs to the HCDs based on matching prefix,
             // but you could just as well generate new configs and send them here...
             // Note that a CommandStatus message should eventually be sent to the replyTo actor.
-            System.out.println("XXX configArg = " + configArg);
             return distributeSetupConfigs(locationsResolved, configArg, replyTo);
         }
         return valid;
