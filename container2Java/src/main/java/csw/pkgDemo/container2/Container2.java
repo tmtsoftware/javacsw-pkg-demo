@@ -9,6 +9,6 @@ import java.util.Optional;
  */
 public class Container2 {
     public static void main(String[] args) {
-        JContainerCmd.createContainerCmd(args, Optional.of("container2.conf"));
+        JContainerCmd.createContainerCmd("container2java", args, Optional.of("container2.conf"));
     }
 }
