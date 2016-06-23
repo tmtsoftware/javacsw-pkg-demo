@@ -76,7 +76,6 @@ public class Assembly1 extends JAssemblyControllerWithLifecycleHandler {
                         + ConfigJSON.writeConfig(config).toString());
         }
         return result;
-//        return JAssemblyController.Valid;
     }
 
     @Override
