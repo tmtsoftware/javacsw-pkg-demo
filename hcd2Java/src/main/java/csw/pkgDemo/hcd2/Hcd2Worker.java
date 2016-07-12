@@ -8,16 +8,17 @@ import akka.japi.pf.ReceiveBuilder;
 import akka.util.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import csw.util.config.ConfigJSON;
 import csw.util.config.StateVariable.CurrentState;
 import csw.util.config.Configurations.*;
 import csw.util.config.StringKey;
+
 import org.zeromq.ZMQ;
 
 import java.util.Arrays;
 import java.util.Optional;
 
 import static csw.pkgDemo.hcd2.Hcd2Worker.Msg.RequestCurrentState;
+import static javacsw.util.config.JItems.*;
 
 
 /**
@@ -105,7 +106,7 @@ public class Hcd2Worker extends AbstractActor {
 
     // Action when receiving a SetupConfig
     private void handleSetupConfig(SetupConfig setupConfig) {
-        Optional<String> value = setupConfig.jget(key, 0);
+        Optional<String> value = jget(setupConfig, key, 0);
         if (value.isPresent()) {
             int pos = Arrays.asList(choices).indexOf(value.get());
             setPos(currentPos, pos);
@@ -128,14 +129,14 @@ public class Hcd2Worker extends AbstractActor {
         int pos = Integer.parseInt(reply.decodeString(ZMQ.CHARSET.name()));
         log.info("ZMQ current pos: " + pos);
         String value = choices[pos];
-        CurrentState state = new CurrentState(prefix).jset(key, value);
+        CurrentState state = jadd(new CurrentState(prefix), jset(key, value));
         getContext().parent().tell(state, self());
         setPos(pos, demandPos);
     }
 
     // Send the parent the current state
     private void handleRequestCurrentState() {
-        CurrentState state = new CurrentState(prefix).jset(key, choices[currentPos]);
+        CurrentState state = jadd(new CurrentState(prefix), jset(key, choices[currentPos]));
         getContext().parent().tell(state, self());
     }
 }
