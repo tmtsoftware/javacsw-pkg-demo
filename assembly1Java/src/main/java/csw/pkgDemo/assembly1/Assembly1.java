@@ -32,6 +32,7 @@ public class Assembly1 extends JAssemblyControllerWithLifecycleHandler {
      * @param info contains information about the assembly and the components it depends on
      */
     public Assembly1(AssemblyInfo info) {
+        super(info);
         this.info = info;
 
         // Receive actor messages
