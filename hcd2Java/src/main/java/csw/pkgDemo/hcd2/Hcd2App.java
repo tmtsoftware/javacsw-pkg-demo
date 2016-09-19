@@ -5,6 +5,7 @@ import csw.services.pkg.Component.HcdInfo;
 import csw.services.pkg.Supervisor;
 import javacsw.services.pkg.JComponent;
 import javacsw.services.pkg.JComponentSup;
+import javacsw.services.pkg.JSupervisor3;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.util.*;
@@ -30,6 +31,6 @@ public class Hcd2App {
         String className = "csw.pkgDemo.hcd2.Hcd2";
         HcdInfo hcdInfo = JComponentSup.hcdInfo(hcdName, prefix, className, JComponent.RegisterOnly,
                 Collections.singleton(AkkaType), new FiniteDuration(1, TimeUnit.SECONDS));
-        Supervisor.apply(hcdInfo);
+        JSupervisor3.create(hcdInfo);
     }
 }

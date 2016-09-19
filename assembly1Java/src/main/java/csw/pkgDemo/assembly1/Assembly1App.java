@@ -10,6 +10,7 @@ import javacsw.services.loc.JConnection;
 import javacsw.services.loc.JConnectionType;
 import javacsw.services.pkg.JComponent;
 import javacsw.services.pkg.JSupervisor;
+import javacsw.services.pkg.JSupervisor3;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -42,6 +43,6 @@ public class Assembly1App {
                 hcdConnections);
 
         // Create the supervisor and assembly in a new actor system
-         JSupervisor.create(assemblyInfo);
+         JSupervisor3.create(assemblyInfo);
     }
 }
