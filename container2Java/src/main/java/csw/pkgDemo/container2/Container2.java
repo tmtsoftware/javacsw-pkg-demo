@@ -2,6 +2,8 @@ package csw.pkgDemo.container2;
 
 import javacsw.services.apps.containerCmd.JContainerCmd;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -9,6 +11,11 @@ import java.util.Optional;
  */
 public class Container2 {
     public static void main(String[] args) {
-        JContainerCmd.createContainerCmd("container2java", args, Optional.of("container2.conf"));
+        // This defines the names that can be used with the --start option and the config files used ("" is the default entry)
+        Map<String, String> m = new HashMap<>();
+        m.put("", "container2.conf"); // default value
+
+        // Parse command line args for the application (app name is container2java, like the sbt project)
+        JContainerCmd.createContainerCmd("container2java", args, m);
     }
 }
