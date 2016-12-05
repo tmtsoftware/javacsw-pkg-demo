@@ -1,6 +1,8 @@
 Java CSW Command Service Package Demo
 =====================================
 
+#### Note: This project is not currently up to date with the csw master branch. It will be updated later.
+
 This project contains standalone Java applications for testing the command service
 Container, Assembly and HCD components and is based on
 the document "OSW TN009 - TMT CSW PACKAGING SOFTWARE DESIGN DOCUMENT".
