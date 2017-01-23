@@ -3,16 +3,15 @@ package csw.pkgDemo.hcd2;
 import akka.actor.ActorRef;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import csw.services.pkg.Supervisor;
+import csw.services.pkg.Component;
 import csw.util.config.Configurations.SetupConfig;
 import csw.util.config.StringKey;
-import javacsw.services.pkg.JHcdControllerWithLifecycleHandler;
-import javacsw.services.pkg.JLifecycleManager;
-import javacsw.services.pkg.JSupervisor3;
+import javacsw.services.ccs.JHcdController;
+import javacsw.services.pkg.JSupervisor;
 
 // A test HCD that is configured with the given name and config path
 @SuppressWarnings({"WeakerAccess", "unused"})
-public class Hcd2 extends JHcdControllerWithLifecycleHandler {
+public class Hcd2 extends JHcdController {
   private final LoggingAdapter log = Logging.getLogger(context().system(), this);
 
   /**
@@ -54,15 +53,14 @@ public class Hcd2 extends JHcdControllerWithLifecycleHandler {
    * @param info the HCD's prefix, used in configurations
    * @param supervisor the HCD's supervisor actor
    */
-  private Hcd2(final HcdInfo info, ActorRef supervisor) {
-    super(info);
+  private Hcd2(final Component.HcdInfo info, ActorRef supervisor) {
     // Receive actor messages
-    receive(defaultReceive());
+    receive(controllerReceive());
 
     worker = getContext().actorOf(Hcd2Worker.props(info.prefix()));
 
-    supervisor.tell(JSupervisor3.Initialized, self());
-    supervisor.tell(JSupervisor3.Started, self());
+    supervisor.tell(JSupervisor.Initialized, self());
+    supervisor.tell(JSupervisor.Started, self());
   }
 
   @Override

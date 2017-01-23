@@ -7,7 +7,7 @@ import Settings._
 lazy val assembly1Java = project
   .enablePlugins(JavaAppPackaging)
   .settings(packageSettings("assembly1Java", "Assembly Java Demo", "Example Java assembly"): _*)
-  .settings(libraryDependencies ++= Seq(pkg, javacsw))
+  .settings(libraryDependencies ++= Seq(pkg, ccs, javacsw))
   .dependsOn(hcd2Java)
 
 lazy val container1Java = project
@@ -18,7 +18,7 @@ lazy val container1Java = project
 lazy val hcd2Java = project
   .enablePlugins(JavaAppPackaging)
   .settings(packageSettings("hcd2Java", "HCD Java demo", "Example Java HCD"): _*)
-  .settings(libraryDependencies ++= Seq(pkg, jeromq, javacsw))
+  .settings(libraryDependencies ++= Seq(pkg, ccs, jeromq, javacsw))
 
 lazy val container2Java = project
   .enablePlugins(JavaAppPackaging)
