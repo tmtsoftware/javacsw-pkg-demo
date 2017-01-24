@@ -4,6 +4,7 @@ import sbt.Keys._
 import sbt._
 
 
+//noinspection TypeAnnotation
 // Defines the global build settings so they don't need to be edited everywhere
 object Settings {
 
