@@ -60,7 +60,6 @@ public class Hcd2 extends JHcdController {
     worker = getContext().actorOf(Hcd2Worker.props(info.prefix()));
 
     supervisor.tell(JSupervisor.Initialized, self());
-    supervisor.tell(JSupervisor.Started, self());
   }
 
   @Override

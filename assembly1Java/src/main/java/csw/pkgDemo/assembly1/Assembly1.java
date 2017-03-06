@@ -64,7 +64,7 @@ public class Assembly1 extends JAssemblyControllerWithPubSub {
             connections.put(l.connection(), l);
             log.info("Got actorRef: " + l.getActorRef().get());
             if (connections.size() == 2)
-              supervisor.tell(JSupervisor.Started, self());
+              supervisor.tell(JSupervisor.Initialized, self());
 
             // XXX TODO FIXME: replace with telemetry
             l.getActorRef().get().tell(JPublisherActor.Subscribe, self());
@@ -106,7 +106,6 @@ public class Assembly1 extends JAssemblyControllerWithPubSub {
       matchAny(x -> log.error("Unexpected message: " + x)).build())
     );
 
-    supervisor.tell(JSupervisor.Initialized, self());
   }
 
 
