@@ -4,7 +4,6 @@ import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
 import akka.util.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -94,17 +93,19 @@ public class Hcd2Worker extends AbstractActor {
         String url = settings.getString("zmq." + zmqKey + ".url");
         log.info("For " + zmqKey + ": using ZMQ URL = " + url);
         zmqClient = getContext().actorOf(ZmqClient.props(url));
-
-        // Receive actor messages
-        receive(ReceiveBuilder.
-                match(SetupConfig.class, this::handleSetupConfig).
-                match(ByteString.class, this::handleZmqMessage).
-                matchEquals(RequestCurrentState, x -> handleRequestCurrentState()).
-                matchAny(t -> log.warning("Unknown message received: " + t)).
-                build());
     }
 
-    // Action when receiving a SetupConfig
+    @Override
+    public Receive createReceive() {
+        return receiveBuilder().
+            match(SetupConfig.class, this::handleSetupConfig).
+            match(ByteString.class, this::handleZmqMessage).
+            matchEquals(RequestCurrentState, x -> handleRequestCurrentState()).
+            matchAny(t -> log.warning("Unknown message received: " + t)).
+            build();
+    }
+
+        // Action when receiving a SetupConfig
     private void handleSetupConfig(SetupConfig setupConfig) {
         Optional<String> value = jget(setupConfig, key, 0);
         if (value.isPresent()) {

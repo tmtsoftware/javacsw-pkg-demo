@@ -2,8 +2,8 @@ import sbt._
 
 object Dependencies {
 
-  val Version = "0.4-SNAPSHOT"
-  val ScalaVersion = "2.12.1"
+  val Version = "0.5"
+  val ScalaVersion = "2.12.2"
 
   val pkg = "org.tmt" %% "pkg" % Version
   val ccs = "org.tmt" %% "ccs" % Version

@@ -55,11 +55,14 @@ public class ZmqClient  extends AbstractActor {
 
         // TODO: Set timeout for receive and handle timeout message
 //        getContext().setReceiveTimeout(timeout);
+    }
 
-        receive(ReceiveBuilder.
-                matchEquals(Msg.Move, m -> move()).
-                matchAny(t -> log.warning("Unknown message received: " + t)).
-                build());
+    @Override
+    public Receive createReceive() {
+        return receiveBuilder().
+            matchEquals(Msg.Move, m -> move()).
+            matchAny(t -> log.warning("Unknown message received: " + t)).
+            build();
     }
 
     private void move() {

@@ -4,10 +4,14 @@ import akka.actor.ActorRef;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import csw.services.pkg.Component;
+import csw.util.akka.SetLogLevelActor;
 import csw.util.config.Configurations.SetupConfig;
 import csw.util.config.StringKey;
 import javacsw.services.ccs.JHcdController;
 import javacsw.services.pkg.JSupervisor;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
 
 // A test HCD that is configured with the given name and config path
 @SuppressWarnings({"WeakerAccess", "unused"})
@@ -47,6 +51,20 @@ public class Hcd2 extends JHcdController {
   // Hcd2Worker actor used to process configs
   private final ActorRef worker;
 
+  // Handle SetLogLevel message as this was removed from the supervisor at some point
+  private Receive logLevelReceive() {
+    return receiveBuilder().
+            match(SetLogLevelActor.SetLogLevel.class, logLevel -> {
+              log.info("Received SetLogLevel("+logLevel.level()+")");
+              try {
+                Logger l = (Logger) LoggerFactory.getLogger(logLevel.rootPackage());
+                l.setLevel(Level.toLevel(logLevel.level()));
+              } catch (Exception e) {
+                log.error(e, "Failed to set log level");
+              }
+            }).build();
+  }
+
   /**
    * Creates the Hcd2 actor
    *
@@ -54,12 +72,15 @@ public class Hcd2 extends JHcdController {
    * @param supervisor the HCD's supervisor actor
    */
   private Hcd2(final Component.HcdInfo info, ActorRef supervisor) {
-    // Receive actor messages
-    receive(controllerReceive());
 
     worker = getContext().actorOf(Hcd2Worker.props(info.prefix()));
 
     supervisor.tell(JSupervisor.Initialized, self());
+  }
+
+  @Override
+  public Receive createReceive() {
+    return jControllerReceive().orElse(logLevelReceive());
   }
 
   @Override

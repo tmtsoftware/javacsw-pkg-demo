@@ -3,7 +3,6 @@ package csw.pkgDemo.assembly1;
 import akka.actor.ActorRef;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.japi.pf.ReceiveBuilder;
 import csw.pkgDemo.hcd2.Hcd2;
 import csw.services.ccs.HcdController;
 import csw.services.ccs.SequentialExecutor;
@@ -34,6 +33,7 @@ import static scala.compat.java8.OptionConverters.toJava;
 @SuppressWarnings({"FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType", "unused"})
 public class Assembly1 extends JAssemblyControllerWithPubSub {
   private final AssemblyInfo info;
+  private final ActorRef supervisor;
 
   private final LoggingAdapter log = Logging.getLogger(context().system(), this);
 
@@ -50,66 +50,65 @@ public class Assembly1 extends JAssemblyControllerWithPubSub {
   public Assembly1(AssemblyInfo info, ActorRef supervisor) {
     super(info);
     this.info = info;
+    this.supervisor = supervisor;
 
     ActorRef trackerSubscriber = context().actorOf(LocationSubscriberActor.props());
     trackerSubscriber.tell(JLocationSubscriberActor.Subscribe, self());
     LocationSubscriberActor.trackConnections(info.connections(), trackerSubscriber);
-
-    // Receive actor messages
-    receive(defaultReceive().orElse(ReceiveBuilder.
-      match(LocationService.Location.class, location -> {
-        if (location instanceof ResolvedAkkaLocation) {
-          ResolvedAkkaLocation l = (ResolvedAkkaLocation) location;
-          if (l.getActorRef().isPresent() && l.isResolved()) {
-            connections.put(l.connection(), l);
-            log.info("Got actorRef: " + l.getActorRef().get());
-            if (connections.size() == 2)
-              supervisor.tell(JSupervisor.Initialized, self());
-
-            // XXX TODO FIXME: replace with telemetry
-            l.getActorRef().get().tell(JPublisherActor.Subscribe, self());
-          }
-        }
-      }).
-
-      match(CurrentState.class, this::updateCurrentState).
-
-      matchEquals(JSupervisor.Running, x -> log.info("Received running")).
-
-      matchEquals(JSupervisor.RunningOffline, x -> log.info("Received running offline")).
-
-      matchEquals(JSupervisor.DoRestart, x -> log.info("Received dorestart")).
-
-      matchEquals(JSupervisor.DoShutdown, x -> {
-        log.info("Received doshutdown");
-        // Just say complete for now
-        supervisor.tell(JSupervisor.ShutdownComplete, self());
-      }).
-
-      match(LifecycleFailureInfo.class, x -> log.info("Received failed state: " + x.state() + "for reason: " + x.reason())).
-
-
-      match(SequentialExecutor.ExecuteOne.class, t -> {
-        SetupConfig sc = t.sc();
-        Optional<ActorRef> commandOriginator = toJava(t.commandOriginator());
-        getActorRef(sc.prefix()).ifPresent(hcdActorRef -> {
-          // Submit the config to the HCD
-          hcdActorRef.tell(new HcdController.Submit(sc), self());
-          // If a commandOriginator was given, start a matcher actor that will reply with the command status
-          commandOriginator.ifPresent(replyTo ->
-            context().actorOf(JHcdStatusMatcherActor.props(new DemandState(sc), hcdActorRef, replyTo))
-          );
-        });
-      }).
-
-
-      matchAny(x -> log.error("Unexpected message: " + x)).build())
-    );
-
   }
 
+  @Override
+  public Receive createReceive() {
+    return jDefaultReceive().orElse(receiveBuilder().
+        match(LocationService.Location.class, location -> {
+          if (location instanceof ResolvedAkkaLocation) {
+            ResolvedAkkaLocation l = (ResolvedAkkaLocation) location;
+            if (l.getActorRef().isPresent() && l.isResolved()) {
+              connections.put(l.connection(), l);
+              log.info("Got actorRef: " + l.getActorRef().get());
+              if (connections.size() == 2)
+                supervisor.tell(JSupervisor.Initialized, self());
 
-  // Current state received from one of the HCDs
+              // XXX TODO FIXME: replace with telemetry
+              l.getActorRef().get().tell(JPublisherActor.Subscribe, self());
+            }
+          }
+        }).
+
+        match(CurrentState.class, this::updateCurrentState).
+
+        matchEquals(JSupervisor.Running, x -> log.info("Received running")).
+
+        matchEquals(JSupervisor.RunningOffline, x -> log.info("Received running offline")).
+
+        matchEquals(JSupervisor.DoRestart, x -> log.info("Received dorestart")).
+
+        matchEquals(JSupervisor.DoShutdown, x -> {
+          log.info("Received doshutdown");
+          // Just say complete for now
+          supervisor.tell(JSupervisor.ShutdownComplete, self());
+        }).
+
+        match(LifecycleFailureInfo.class, x -> log.info("Received failed state: " + x.state() + "for reason: " + x.reason())).
+
+
+        match(SequentialExecutor.ExecuteOne.class, t -> {
+          SetupConfig sc = t.sc();
+          Optional<ActorRef> commandOriginator = toJava(t.commandOriginator());
+          getActorRef(sc.prefix()).ifPresent(hcdActorRef -> {
+            // Submit the config to the HCD
+            hcdActorRef.tell(new HcdController.Submit(sc), self());
+            // If a commandOriginator was given, start a matcher actor that will reply with the command status
+            commandOriginator.ifPresent(replyTo ->
+                context().actorOf(JHcdStatusMatcherActor.props(new DemandState(sc), hcdActorRef, replyTo))
+            );
+          });
+        }).
+
+        matchAny(x -> log.error("Unexpected message: " + x)).build());
+  }
+
+    // Current state received from one of the HCDs
   private void updateCurrentState(CurrentState s) {
     stateMap.put(s.prefix(), s);
     requestCurrent();
