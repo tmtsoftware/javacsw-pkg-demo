@@ -5,8 +5,8 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import csw.services.pkg.Component;
 import csw.util.akka.SetLogLevelActor;
-import csw.util.config.Configurations.SetupConfig;
-import csw.util.config.StringKey;
+import csw.util.param.Parameters.Setup;
+import csw.util.param.StringKey;
 import javacsw.services.ccs.JHcdController;
 import javacsw.services.pkg.JSupervisor;
 import ch.qos.logback.classic.Level;
@@ -68,7 +68,7 @@ public class Hcd2 extends JHcdController {
   /**
    * Creates the Hcd2 actor
    *
-   * @param info the HCD's prefix, used in configurations
+   * @param info the HCD's prefix, used in parameters
    * @param supervisor the HCD's supervisor actor
    */
   private Hcd2(final Component.HcdInfo info, ActorRef supervisor) {
@@ -85,8 +85,8 @@ public class Hcd2 extends JHcdController {
 
   @Override
   // Send the config to the worker for processing
-  public void process(SetupConfig config) {
-    worker.tell(config, self());
+  public void process(Setup s) {
+    worker.tell(s, self());
   }
 
   @Override

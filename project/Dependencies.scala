@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val Version = "0.5"
+  val Version = "0.7"
   val ScalaVersion = "2.12.2"
 
   val pkg = "org.tmt" %% "pkg" % Version

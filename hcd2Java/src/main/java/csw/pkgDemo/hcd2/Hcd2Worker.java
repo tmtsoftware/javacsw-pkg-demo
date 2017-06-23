@@ -7,9 +7,9 @@ import akka.japi.Creator;
 import akka.util.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import csw.util.config.StateVariable.CurrentState;
-import csw.util.config.Configurations.*;
-import csw.util.config.StringKey;
+import csw.util.param.StateVariable.CurrentState;
+import csw.util.param.Parameters.*;
+import csw.util.param.StringKey;
 
 import org.zeromq.ZMQ;
 
@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import static csw.pkgDemo.hcd2.Hcd2Worker.Msg.RequestCurrentState;
-import static javacsw.util.config.JItems.*;
+import static javacsw.util.param.JParameters.*;
 
 
 /**
@@ -98,7 +98,7 @@ public class Hcd2Worker extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder().
-            match(SetupConfig.class, this::handleSetupConfig).
+            match(Setup.class, this::handleSetup).
             match(ByteString.class, this::handleZmqMessage).
             matchEquals(RequestCurrentState, x -> handleRequestCurrentState()).
             matchAny(t -> log.warning("Unknown message received: " + t)).
@@ -106,8 +106,8 @@ public class Hcd2Worker extends AbstractActor {
     }
 
         // Action when receiving a SetupConfig
-    private void handleSetupConfig(SetupConfig setupConfig) {
-        Optional<String> value = jget(setupConfig, key, 0);
+    private void handleSetup(Setup setup) {
+        Optional<String> value = jget(setup, key, 0);
         if (value.isPresent()) {
             int pos = Arrays.asList(choices).indexOf(value.get());
             setPos(currentPos, pos);

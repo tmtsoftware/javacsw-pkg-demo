@@ -5,27 +5,24 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import csw.pkgDemo.hcd2.Hcd2;
 import csw.services.ccs.HcdController;
-import csw.services.ccs.SequentialExecutor;
 import csw.services.ccs.Validation;
 import csw.services.loc.Connection;
 import csw.services.loc.LocationService;
 import csw.services.loc.LocationSubscriberActor;
-import csw.util.config.Configurations.*;
-import csw.util.config.StateVariable;
-import csw.util.config.StateVariable.*;
+import csw.util.param.Parameters.*;
+import csw.util.param.StateVariable;
+import csw.util.param.StateVariable.*;
 import javacsw.services.ccs.JAssemblyControllerWithPubSub;
 import javacsw.services.ccs.JHcdStatusMatcherActor;
 import javacsw.services.loc.JLocationSubscriberActor;
 import javacsw.services.pkg.JSupervisor;
-import javacsw.util.config.JPublisherActor;
+import javacsw.util.param.JPublisherActor;
 import csw.services.loc.LocationService.ResolvedAkkaLocation;
 import csw.services.pkg.Supervisor.LifecycleFailureInfo;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static javacsw.services.ccs.JValidation.Valid;
-import static scala.compat.java8.OptionConverters.toJava;
 
 /**
  * A Java based test assembly that just forwards configs to HCDs based on prefix
@@ -44,7 +41,7 @@ public class Assembly1 extends JAssemblyControllerWithPubSub {
   private Map<String, StateVariable.CurrentState> stateMap = new HashMap<>();
 
   /**
-   * @param info contains information about the assembly and the components it depends on
+   * @param info       contains information about the assembly and the components it depends on
    * @param supervisor a reference to this component's supervisor actor
    */
   public Assembly1(AssemblyInfo info, ActorRef supervisor) {
@@ -91,26 +88,12 @@ public class Assembly1 extends JAssemblyControllerWithPubSub {
 
         match(LifecycleFailureInfo.class, x -> log.info("Received failed state: " + x.state() + "for reason: " + x.reason())).
 
-
-        match(SequentialExecutor.ExecuteOne.class, t -> {
-          SetupConfig sc = t.sc();
-          Optional<ActorRef> commandOriginator = toJava(t.commandOriginator());
-          getActorRef(sc.prefix()).ifPresent(hcdActorRef -> {
-            // Submit the config to the HCD
-            hcdActorRef.tell(new HcdController.Submit(sc), self());
-            // If a commandOriginator was given, start a matcher actor that will reply with the command status
-            commandOriginator.ifPresent(replyTo ->
-                context().actorOf(JHcdStatusMatcherActor.props(new DemandState(sc), hcdActorRef, replyTo))
-            );
-          });
-        }).
-
         matchAny(x -> log.error("Unexpected message: " + x)).build());
   }
 
-    // Current state received from one of the HCDs
+  // Current state received from one of the HCDs
   private void updateCurrentState(CurrentState s) {
-    stateMap.put(s.prefix(), s);
+    stateMap.put(s.prefixStr(), s);
     requestCurrent();
   }
 
@@ -122,13 +105,28 @@ public class Assembly1 extends JAssemblyControllerWithPubSub {
   }
 
   @Override
-  public List<Validation.Validation> setup(SetupConfigArg sca, Optional<ActorRef> commandOriginator) {
-    // Returns validations for all
-    List<Validation.Validation> validations = validateSequenceConfigArg(sca);
-    if (Validation.isAllValid(validations)) {
-      context().actorOf(SequentialExecutor.props(self(), sca, commandOriginator));
+  public Validation.Validation setup(Setup s, Optional<ActorRef> commandOriginator) {
+    Validation.Validation validation = validateOneConfig(s);
+    if (validation == Valid) {
+      getActorRef(s.prefix().prefix()).ifPresent(hcdActorRef -> {
+        // Submit the config to the HCD
+        hcdActorRef.tell(new HcdController.Submit(s), self());
+        // If a commandOriginator was given, start a matcher actor that will reply with the command status
+        commandOriginator.ifPresent(replyTo ->
+            getContext().actorOf(JHcdStatusMatcherActor.props(new DemandState(s), hcdActorRef, replyTo)));
+      });
     }
-    return validations;
+    return validation;
+  }
+
+  @Override
+  public Validation.Validation observe(Observe configArg, Optional<ActorRef> replyTo) {
+    return Valid;
+  }
+
+  private Validation.Validation validateOneConfig(Setup sc) {
+    if (sc.exists(Hcd2.filterKey) || sc.exists(Hcd2.disperserKey)) return Valid;
+    else return new Validation.Invalid(new Validation.WrongPrefixIssue("Expected a filter or disperser config"));
   }
 
   /**
@@ -143,18 +141,6 @@ public class Assembly1 extends JAssemblyControllerWithPubSub {
       }
     }
     return result;
-  }
-
-  /**
-   * Performs the initial validation of the incoming SetupConfgiArg
-   */
-  private List<Validation.Validation> validateSequenceConfigArg(SetupConfigArg sca) {
-    return sca.getConfigs().stream().map(this::validateOneSetupConfig).collect(Collectors.toList());
-  }
-
-  private Validation.Validation validateOneSetupConfig(SetupConfig sc) {
-    if (sc.exists(Hcd2.filterKey) || sc.exists(Hcd2.disperserKey)) return Valid;
-    else return new Validation.Invalid(new Validation.WrongConfigKeyIssue("Expected a filter or disperser config"));
   }
 }
 
